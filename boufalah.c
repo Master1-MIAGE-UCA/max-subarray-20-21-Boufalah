@@ -8,7 +8,11 @@
 
 #define NEUTREADDICTION 0
 #define NEUTREMAX -2147483647
-#define MAX 100
+#define MAXIMUM 100
+#define SUM 1
+#define MAX 2
+#define PREFIX 1
+#define SUFIX 2
 
 #define max(a,b) (((a)>(b))?(a):(b))
 
@@ -95,6 +99,7 @@ void final(struct tablo * a, struct tablo *b, int op) {
 
 void initPrefix(struct tablo* source,struct tablo* a){
   int firstCase = a->size - source->size;
+  #pragma omp parallel for
   for (int i = 0; i < source->size; i++) {
     a->tab[i+firstCase] = source->tab[i];
   }
@@ -103,6 +108,7 @@ void initPrefix(struct tablo* source,struct tablo* a){
 
 void initSufix(struct tablo* source,struct tablo* a){
   int firstCase = a->size - source->size;
+  #pragma omp parallel for
   for (int i = 0; i < source->size; i++) {
     a->tab[i+firstCase] = source->tab[source->size-i-1];
   }
@@ -121,6 +127,7 @@ void initScan(struct tablo* source,struct tablo* a, int type){
 
 void resultSufix(struct tablo* b,struct tablo* result){
   int deb = result->size*2;
+  #pragma omp parallel for
   for (int i =0 ; i < result->size; i++) {
     result->tab[i] = b->tab[deb-i-1];
   }
@@ -128,6 +135,7 @@ void resultSufix(struct tablo* b,struct tablo* result){
 
 void resultPrefix(struct tablo* b,struct tablo* result){
   int deb = result->size;
+  #pragma omp parallel for
   for (int i = deb; i < b->size; i++) {
     result->tab[i-deb] = b->tab[i];
   }
@@ -146,7 +154,8 @@ void resultScan(struct tablo* source,struct tablo* b, int type){
   }
 }
 
-void scan(struct tablo* source,struct tablo* result,int operator ,int type){// type = [sufix 2 |prefix 1] // operator [1 sum | 2 max]  [neutre l'elemnt neutre]
+void scan(struct tablo* source,struct tablo* result,int operator ,int type){
+	// type = [prefix 1|sufix |] // operator [1 sum | 2 max]  
   struct tablo * a = allocateTablo(source->size*2);
   struct tablo * b = allocateTablo(source->size*2);
 
@@ -175,7 +184,7 @@ void submax(struct tablo * source, struct tablo * pMax , struct tablo * sSum,str
 }
 
 void resultMaxSubArray(struct tablo * m, struct tablo * source ){
-  // fin first max
+
   int deb = 0 ;
   int fin = 0 ;
   for (int i = 0; i < m->size; i++) {
@@ -197,11 +206,11 @@ void resultMaxSubArray(struct tablo * m, struct tablo * source ){
 void maxSubArray(struct tablo* source){
   struct tablo * pSum = allocateTablo(source->size);
   struct tablo * sSum = allocateTablo(source->size);
-
-//  #pragma omp parallel{
-    scan(source,pSum,1,1); // prefixSum
-    scan(source,sSum,1,2); // sufixSum
-//  }
+  #pragma omp parallel
+  {
+    scan(source,pSum,SUM,PREFIX); // prefixSum
+    scan(source,sSum,SUM,SUFIX); // sufixSum
+  }
 
   //printf("------------------ sufixSum ------------------\n");
   //printArray(sSum);
@@ -211,9 +220,11 @@ void maxSubArray(struct tablo* source){
 
   struct tablo * sMax = allocateTablo(source->size);
   struct tablo * pMax = allocateTablo(source->size);
-
-  scan(sSum, pMax,2,1); // prefixMax
-  scan(pSum, sMax,2,2); // prefixSum
+  #pragma omp parallel
+  {
+  scan(sSum, pMax,MAX,PREFIX);
+  scan(pSum, sMax,MAX,SUFIX);
+  }
   //printf("------------------ sufixMax ------------------ \n");
   //printArray(sMax);
 
@@ -223,8 +234,8 @@ void maxSubArray(struct tablo* source){
   struct tablo * m = allocateTablo(source->size);
 
   submax(source,pMax ,sSum,sMax ,pSum,m); // dernier étape
-//  //printf("------------------ Result ------------------ \n");
-//  //printArray(m);
+  //printf("------------------ Result ------------------ \n");
+  //printArray(m);
 
   resultMaxSubArray(m, source);
 
