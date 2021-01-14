@@ -184,16 +184,22 @@ void submax(struct tablo * source, struct tablo * pMax , struct tablo * sSum,str
 }
 
 void resultMaxSubArray(struct tablo * m, struct tablo * source ){
-
+  // fin first max
   int deb = 0 ;
   int fin = 0 ;
-  for (int i = 0; i < m->size; i++) {
+  int endofsub = 0;
+  for (int i = 1; i < m->size; i++) {
     if (m->tab[deb] < m->tab[i] ) {
       deb = i;
       fin = i;
-    }
-    if (m->tab[deb] == m->tab[i]) {
-      fin = i;
+      endofsub = 0;
+
+    }else{
+	    if (m->tab[deb] == m->tab[i] && endofsub ==0) {
+	      fin = i;
+	    }else{
+	    	endofsub = 1;
+	    }
     }
   }
   printf("%d ",m->tab[deb]);
